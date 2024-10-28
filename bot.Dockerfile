@@ -17,13 +17,13 @@ ENV \
 RUN curl -sSL https://install.python-poetry.org | python3 -
 
 # Copy only requirements to cache them in docker layer
-WORKDIR /flats-searcher
-COPY poetry.lock pyproject.toml /flats-searcher/
+WORKDIR /bot
+COPY poetry.lock pyproject.toml /bot/
 
 # Project initialization:
 RUN poetry install --no-dev
 
 # Creating folders, and files for a project:
-COPY . /flats-searcher/
+COPY . /bot/
 
-WORKDIR /flats-searcher/src
+WORKDIR /bot/src

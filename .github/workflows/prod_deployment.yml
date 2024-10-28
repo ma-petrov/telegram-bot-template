@@ -1,0 +1,68 @@
+name: Production Deployment
+
+on:
+  push:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v4
+
+      - name: Deploy to production
+        uses: appleboy/ssh-action@master
+        id: deploy
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.deploy == 'true' || github.event_name == 'push'
+        with:
+          host: ${{ secrets.DEPLOY_SERVER }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            REPOSITORY_NAME=${{ github.event.repository.name }}
+            BOTS_DIR=~/telegram-bots
+            REPO_DIR=$BOTS_DIR/$REPOSITORY_NAME
+
+            # Ensure bots directory exists
+            mkdir -p $BOTS_DIR
+
+            # Clone repository if it doesn't exist
+            if [ ! -d "$REPO_DIR" ]; then
+              cd $BOTS_DIR
+              git clone git@github.com:ma-petrov/$REPOSITORY_NAME.git
+              cd $REPO_DIR
+            else
+              cd $REPO_DIR
+              git fetch origin main
+            fi
+
+            # Checkout latest main
+            git checkout origin/main
+
+            # Check for .prod.env file
+            if [ ! -f ".prod.env" ]; then
+              echo ".prod.env file is missing"
+              exit 2
+            fi
+
+            # Start/update Docker containers
+            docker compose --env-file=.prod.env up --build -d
+
+      - name: Send deployment status to Telegram
+        uses: appleboy/telegram-action@master
+        if: always()
+        with:
+          to: ${{ secrets.TELEGRAM_BOTS_ALERTING_TO }}
+          token: ${{ secrets.TELEGRAM_BOTS_ALERTING_TOKEN }}
+          format: "markdown"
+          disable_web_page_preview: true
+          message: |
+            Deployment Status for ${{ github.repository }}:
+            ${{ steps.deploy.outcome == 'success' && '✅ Successfully deployed' || '❌ Deployment failed' }}
+            
+            ${{ steps.deploy.outcome == 'failure' && steps.deploy.outputs.status == '2' && '⚠️ .prod.env file is missing. Please set it up.' || '' }}
+            ${{ steps.deploy.outcome == 'failure' && steps.deploy.outputs.status != '2' && '⚠️ An error occurred during deployment. Check the GitHub Actions logs for details.' || '' }}
+            
+            Commit: [${{ github.sha }}](${{ github.event.head_commit.url }})
+            Message: ${{ github.event.head_commit.message }}

@@ -6,11 +6,16 @@ description = input("bot description? ") or "a telegram bot"
 with open("pyproject.toml", "r") as f:
     template = f.read()
 
-template.replace(r"{{ name }}", f'"{name}"')
-template.replace(r"{{ description }}", f'"{description}"')
+file = (
+    template
+    .replace(r"{{ name }}", f'"{name}"')
+    .replace(r"{{ description }}", f'"{description}"')
+)
 
 with open("pyproject.toml", "w") as f:
-    f.write(template)
+    f.write(file)
 
 os.system("poetry install")
-# os.system("rm create.py")
+
+if input("delete create.py? (y/n) ") == "y":
+    os.system("rm create.py")
