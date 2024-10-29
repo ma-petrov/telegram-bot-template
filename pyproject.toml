@@ -1,7 +1,7 @@
 [tool.poetry]
-name = {{ name }}
+name = "ha"
 version = "0.0.0"
-description = {{ description }}
+description = "haha"
 readme = "README.md"
 package-mode = false
 
