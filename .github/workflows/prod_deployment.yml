@@ -1,9 +1,10 @@
 name: Production Deployment
 
 on:
-  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
     branches:
-      - main
+      - 'main'
 
 jobs:
   deploy:
