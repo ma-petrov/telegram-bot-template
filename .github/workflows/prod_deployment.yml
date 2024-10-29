@@ -1,7 +1,8 @@
 name: Production Deployment
 
 on:
-  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
     branches:
       - main
 
@@ -22,6 +23,7 @@ jobs:
           script: |
             set -e
             REPOSITORY_NAME=${{ github.event.repository.name }}
+            BRANCH=${{ github.head_ref }}
             BOTS_DIR=~/telegram-bots
             REPO_DIR=$BOTS_DIR/$REPOSITORY_NAME
 
@@ -35,11 +37,11 @@ jobs:
               cd $REPO_DIR
             else
               cd $REPO_DIR
-              git fetch origin main
+              git fetch origin $BRANCH
             fi
 
-            # Checkout latest main
-            git checkout origin/main
+            # Checkout latest $BRANCH
+            git checkout origin/$BRANCH
 
             # Check for .prod.env file
             if [ ! -f ".prod.env" ]; then
