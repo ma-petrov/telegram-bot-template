@@ -1,0 +1,12 @@
+# VS Code
+.vscode/*
+*.DS_Store
+
+# Deployment
+*.env
+
+# Python
+*__pycache__*
+
+# Application
+*.csv
